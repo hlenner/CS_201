@@ -1,0 +1,206 @@
+Design Document Assignment #5
+Haley Lenner
+Id 5038275290
+
+Class- GameBoard
+This is the central class for this assignment. It is where the main method is, and contains all of the graphical user interface information and action listeners which I will get into. First, the public static void main method is in here and it prompts for the number of players and animal types for each player. This information is used to create player objects. Then saying Gameboard g = new gameboard() will start the program and initiate the paintcomponent for this class. 
+
+Global Variables:
+String [] pile1 = {"move back 1 space", "Pay $200", "move back 2 spaces", "move back 4 spaces"}; -> bad pile for when you land on a red space, one of these options will randomly be selected for you
+	String [] pile2 = {"Go to space 10- safe space", "Move forward 2 spaces", "Go back to start and get $100", "Go back to start and get $100"}; -> bad pile for when you land on a red space, one of these options will randomly be selected for you
+	boolean started; ->tells you if the game has started yet
+	
+	int pile=0; -> helps pick the card from the pile
+	int player = 0; ->player number whos turn it is to roll, this will be used in association  with the players vector like this : players[player]. It will go from 0->#players and repeat.
+JFrame frame; ->main frame for the game
+	final JButton b = new JButton(); ->button for rolling the dice
+	final JButton quitting = new JButton(); ->button for quitting and exiting the game
+	final JButton startb = new JButton(); ->button for starting the game
+	JLabel label; -> label that holds the imageicon, meaning the pictures of the animals for each player will go into a label to be displayed
+
+	Random generator = new Random(); ->random object used to create random numbers
+	int random=0; ->number generated from the Random class
+
+
+Constructor: 
+First the frame is created and players are added to the frame. The spaces are then added, and their value is set to a random number and their number is set to the appropriate value. The spaces for each of the player is set to 1 because they are all on the first space. Then I set the x and y value of each of the spaces to be the appropriate location based  on their numbers. I started with the top and bottom part of the board and then did the sides. Then I created the associated icon images with the correct players and set the players.get(i).img to be equal to that icon that I just created. The images are not added at this point. Then it does the start, quit, and dice buttons by setting an image, and bounds and then adding it to the frame. It adds action listeners for the dice, start, and quit button. 
+-If quit is selected, the program exits through this action listener(system.exit(0)). 
+-If start is selected, the dice and quit buttons are enabled (button.setEnabled(true)) within the start actionlistener, and the imageicons are finally added to the frame, and started is set to true. The start button is set to false because you cannot start the game again if it is already in the process without quitting. Then it repaints to show icons and these other changes.
+-If dice is selected, this is what shows.
+b.addActionListener(new ActionListener() {
+public void actionPerformed(ActionEvent e) {
+		random=0;
+		if (player==players.size()-1){
+			player=0;
+		}
+		else{
+			player++;
+		}
+		checkMoney(players.get(player));
+		random= generator.nextInt(6)+1;
+		int p=player+1;
+		if (b.hasFocus()){
+			JOptionPane.showMessageDialog(
+			null,"Player "+ p +", the " + players.get(player).animal +" rolled a "+ Integer.toString(random));
+	players.get(player).spacenum=(players.get(player).spacenum+random)%40;	
+			}
+				System.out.println("SPACE #: "+players.get(player).spacenum);
+				labels.get(player).setBounds(spaces.get(players.get(player).spacenum).x-40, spaces.get(players.get(player).spacenum).y-40, 100, 100);
+				repaint();
+				checkSpace(players.get(player));
+				labels.get(player).setBounds(spaces.get(players.get(player).spacenum).x-40, spaces.get(players.get(player).spacenum).y-40, 100, 100);
+				
+				repaint();		
+			}
+		});
+This is where the joptionpane prompting the appropriate player to Roll the dice will pop up. The player starts with the first player in the players vector and continues until getting to players.size()-1. At this point it starts over again from the first. This is how I get it to continue. When the player rolls the dice I then have a joptionpane popping up to tell what number the player rolled. To make the player move to the appropriate space, I add the random number(spaces moved) to the spacenumber of that player. Then to physically move the piece, I get the space associated with the spacenum and then change the bounds of the piece to the new spaces x and y values. I then go into the method checkSpace(). This is the main method of this class, shown below:
+
+public void checkSpace(Player p){
+		pile= generator.nextInt(4);
+		
+		if (p.spacenum%10==0){
+			JOptionPane.showMessageDialog(
+					null,
+					"You landed on a safe space!");
+		}
+		else if (p.spacenum==6 || p.spacenum==19){
+			JOptionPane.showMessageDialog(
+					null,
+					"You get a card from Pile 1 saying: "+pile1[pile]);
+			if (pile==0){
+				p.spacenum=p.spacenum-1;
+			}if (pile==1){
+				p.money=p.money-200;
+			}
+			if (pile==2){
+				p.spacenum=p.spacenum-2;
+			}if (pile==3){
+				p.spacenum=p.spacenum-4;
+			}
+			
+		}
+		else if (p.spacenum==32|| p.spacenum==14){
+			
+			JOptionPane.showMessageDialog(
+					null,
+					"You get a card from Pile 2 saying: "+pile2[pile]);
+			if (pile==0){
+				p.spacenum=10;
+			}if (pile==1){
+				p.spacenum=p.spacenum+2;
+			}
+			if (pile==2){
+				p.spacenum=0;
+				p.money=p.money+100;
+			}if (pile==3){
+				p.spacenum=0;
+				p.money=p.money+100;
+			}
+			
+		}
+		else{
+			if (spaces.get(p.spacenum).isOwned()==false){
+				int reply = JOptionPane.showConfirmDialog(
+					    null,
+					    "Would you like to buy this space for "+ spaces.get(p.spacenum).value+"?",
+					    "Purchase Space",
+					    JOptionPane.YES_NO_OPTION);
+				if (reply == JOptionPane.YES_OPTION) {
+					p.money=p.money-spaces.get(p.spacenum).value;
+					//set isowned to true
+					p.ownedspaces.add(spaces.get(p.spacenum));
+					spaces.get(p.spacenum).owner=p;
+					spaces.get(p.spacenum).open=false;
+				}
+				if (reply == JOptionPane.NO_OPTION) {
+					JOptionPane.showMessageDialog(
+							null,
+							"Ok.");
+				}
+			}
+			else if (spaces.get(p.spacenum).owner==p){
+				int upv=spaces.get(p.spacenum).value+100;
+				int reply = JOptionPane.showConfirmDialog(
+					    null,
+					    "Would you like to upgrade this space to " + upv +" for 100?",
+					    "Upgrade Space",
+					    JOptionPane.YES_NO_OPTION);
+				if (reply == JOptionPane.YES_OPTION) {
+					p.money=p.money-100;
+					//set isowned to true
+					spaces.get(p.spacenum).value+=100;
+				}
+				if (reply == JOptionPane.NO_OPTION) {
+					JOptionPane.showMessageDialog(
+							null,
+							"Ok.");
+				}
+			}
+			else{
+				JOptionPane.showMessageDialog(
+						null,
+						"You have to pay "+ spaces.get(p.spacenum).value +" to " +spaces.get(p.spacenum).owner.animal +" for landing on this space.");
+				p.money=p.money-spaces.get(p.spacenum).value;
+				spaces.get(p.spacenum).owner.money+=spaces.get(p.spacenum).value;
+			}
+		}
+		
+	} 
+This checkspace first sees if it is a safespace. Then, it will notify the player and continue to the next player to roll the dice. If not, it checks if it is space 6, 19, 32, and 14 and randomly draws a card from the appropriate pile of cards depending on which space is landed on (pile 1=bad, 2=good). Then depending on what the card says, the players location will be changed or their money value will be changed. These are the only two properties that are changed. If it is not a special space, then it goes into the else statement. In this else statement, if (spaces.get(p.spacenum).isOwned()==false) will check if the space that the player landed on is already owned or if they can buy it. If it is owned, then the player is notified that they landed on an owned space so they must pay spaces.get(p.spacenum).owner.animal
+The value that is associated with the space. I subtract that value from player p and add it to the owner. If the person landing on the space already owns the space, I ask if they want to upgrade it by $100 for $100. This person will already have to be the owner of that particular space. If nobody owns the space they can either buy it for a value associated with the space or pass. Back to the dice actionlistener in Game_Board constructor, the person will then set the bounds again and repaint again to take into account the new space or monetary value of the player.
+
+
+Paint Component in this class draws the board using drawlines, drawstring, and the color features. It uses drawstring to draw the number on the space, fillRect to create the piles of cards, and fillRect to associate the tiles with those piles. I first add all of the labels in the labels vector to the board because that will make the icons show up each time in the appropriate location. 
+
+
+Vectors: 
+static Vector<Player> players = new Vector<Player>(); ->vector of all of the players currently in the game
+Vector<Space> spaces = new Vector<Space>(); ->list of all 40 spaces on the gameboard
+Vector<JLabel> labels = new Vector<JLabel>(); ->labels that hold all of the imageicons, meaning the pictures of the animals for each player
+
+
+
+
+
+
+Class- Space
+There will be 40 instances of this class, because there are 40 spaces on my board. The space class will have the following variables:
+public boolean open= true;   -> is a space occupied or open? This will be used to see if the player has to pay someone for landing on the space or if the player can buy/upgrade the space.
+	public boolean safe = false; ->is a space a safe space or not?? Start, 10, 20, and 30 are safe spaces.
+	public int value=0; -> this is the random value assigned to the space, how much the space costs and how much the people need to pay you for landing on it.
+	public boolean drawcard= false;
+	public int x; -> this is the xlocation of the space, used to move the pieces
+	public int y; -> this is the ylocation of the space, used to move the pieces
+	public int number; -> this is the space number that helps to reference spacenum of the player class. It is also the number printed on the board
+	public Player owner;  -> this will be used to fill the ownedspaces vector for the player, to print out the spaces that they own. It is also used so if a player lands on someone elses space, they know who they need to pay.
+
+The constructor will be the original one, and everything will be set in the game_board class. The methods isOwned will help see if a space is occupied or open. This will also be used to see if the player has to pay someone for landing on the space or if the playercan buy/upgrade the space. 
+
+
+Class- Player
+The player class will have the following variables assigned:
+Vector<Space> ownedspaces = new Vector<Space>();
+int money=1200; ->the original starting money for each player.
+int spacenum=0; -> the space number that the player is currently on.
+Space sp; ->the space that the player is currently on.
+String animal; ->the name of the animal associated with the player, this helps with associating the image icon
+ImageIcon img; ->the image icon associated with the player
+int x;  ->the current x value location of the player
+int y; ->the current x value location of the player
+
+This constructor is implemented when prompting the players for information in the Game_Board class, the piece is user input and the number of players as well, the other stuff will be : image depends on piece name, xx = 50, yv = 50 for every piece because that is the start location. The space will be space associated with spacenum 0.
+ 
+public Player(String piece, ImageIcon imge, int xx, int yv, Space s){
+		sp=s;
+		img=imge;
+		animal=piece;
+		x=xx;
+		y=yv;
+	}
+
+
+There is one method which will set the space number that the player is on at the moment.
+
+public void setSpaceNum(int num){
+		spacenum=num;
+	}
